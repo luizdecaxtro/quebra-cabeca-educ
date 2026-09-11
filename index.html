@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quebra-Prêmio</title>
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#1E1533" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+<link rel="icon" href="/icons/icon-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; background: #1E1533; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+(() => {
+  const { useState, useMemo } = React;
+  const AREAS = [
+    {
+      id: "matematica",
+      nome: "Matem\xE1tica B\xE1sica",
+      accent: "#4FB6C7",
+      icon: "math",
+      premio: "Assinatura anual de livros",
+      questoes: [
+        { nivel: "F\xE1cil", pergunta: "Quanto \xE9 8 + 15?", opcoes: ["21", "23", "24", "22"], certa: 1 },
+        { nivel: "F\xE1cil", pergunta: "Quanto \xE9 9 \xD7 3?", opcoes: ["26", "29", "27", "24"], certa: 2 },
+        { nivel: "F\xE1cil", pergunta: "Quanto \xE9 100 \u2212 37?", opcoes: ["63", "73", "67", "53"], certa: 0 },
+        { nivel: "F\xE1cil", pergunta: "Quantos lados tem um hex\xE1gono?", opcoes: ["5", "6", "7", "8"], certa: 1 },
+        { nivel: "M\xE9dio", pergunta: "Um trem percorre 90 km em 1h30. Qual sua velocidade m\xE9dia?", opcoes: ["45 km/h", "60 km/h", "50 km/h", "70 km/h"], certa: 1 },
+        { nivel: "M\xE9dio", pergunta: "Quanto \xE9 15% de 200?", opcoes: ["20", "25", "30", "35"], certa: 2 },
+        { nivel: "M\xE9dio", pergunta: "Qual \xE9 o MMC de 4 e 6?", opcoes: ["10", "12", "24", "8"], certa: 1 },
+        { nivel: "Dif\xEDcil", pergunta: "Se 2x + 5 = 17, qual o valor de x?", opcoes: ["5", "7", "6", "8"], certa: 2 },
+        { nivel: "Dif\xEDcil", pergunta: "\xC1rea de um c\xEDrculo de raio 4 (use \u03C0 \u2248 3,14)?", opcoes: ["50,24", "12,56", "25,12", "62,80"], certa: 0 },
+        { nivel: "Dif\xEDcil", pergunta: "Quanto \xE9 3\xB2 + 4\xB2?", opcoes: ["25", "7", "49", "12"], certa: 0 }
+      ]
+    },
+    {
+      id: "portugues",
+      nome: "Portugu\xEAs",
+      accent: "#B78BF2",
+      icon: "port",
+      premio: "Um livro do site, \xE0 sua escolha",
+      questoes: [
+        { nivel: "F\xE1cil", pergunta: "Qual \xE9 o plural de 'papel'?", opcoes: ["papels", "papeles", "pap\xE9is", "pap\xE9s"], certa: 2 },
+        { nivel: "F\xE1cil", pergunta: "Assinale o sin\xF4nimo de 'feliz'.", opcoes: ["triste", "contente", "cansado", "irritado"], certa: 1 },
+        { nivel: "F\xE1cil", pergunta: "Qual \xE9 o ant\xF4nimo de 'grande'?", opcoes: ["pequeno", "enorme", "largo", "alto"], certa: 0 },
+        { nivel: "F\xE1cil", pergunta: "Qual alternativa tem erro de ortografia?", opcoes: ["exce\xE7\xE3o", "estudante", "previl\xE9gio", "necess\xE1rio"], certa: 2 },
+        { nivel: "M\xE9dio", pergunta: "Qual a classe gramatical de 'rapidamente'?", opcoes: ["substantivo", "adjetivo", "adv\xE9rbio", "pronome"], certa: 2 },
+        { nivel: "M\xE9dio", pergunta: "Em 'caf\xE9', a s\xEDlaba t\xF4nica \xE9 a \xFAltima. Como se chama essa classifica\xE7\xE3o?", opcoes: ["proparox\xEDtona", "parox\xEDtona", "ox\xEDtona", "\xE1tona"], certa: 2 },
+        { nivel: "M\xE9dio", pergunta: "Em 'Choveu p\xE9rolas do c\xE9u', a figura de linguagem usada \xE9:", opcoes: ["met\xE1fora", "meton\xEDmia", "hip\xE9rbole", "ironia"], certa: 0 },
+        { nivel: "Dif\xEDcil", pergunta: "Em 'Prefiro viagem a trabalho', a reg\xEAncia do verbo 'preferir' est\xE1:", opcoes: ["correta", "incorreta \u2014 falta a preposi\xE7\xE3o 'a'", "incorreta \u2014 deveria usar 'de'", "incorreta \u2014 deveria usar 'por'"], certa: 0 },
+        { nivel: "Dif\xEDcil", pergunta: "Qual frase usa a crase corretamente?", opcoes: ["Vou \xE0 p\xE9.", "Cheguei \xE0 uma hora.", "Refiro-me \xE0 situa\xE7\xE3o anterior.", "Entreguei \xE0 ela o livro."], certa: 2 },
+        { nivel: "Dif\xEDcil", pergunta: "Qual frase est\xE1 na voz passiva?", opcoes: ["O menino comeu o bolo.", "O bolo foi comido pelo menino.", "O menino vai comer o bolo.", "O menino come o bolo."], certa: 1 }
+      ]
+    },
+    {
+      id: "ciencias",
+      nome: "Ci\xEAncias",
+      accent: "#6FBF8F",
+      icon: "sci",
+      premio: "Um pendrive 32GB",
+      questoes: [
+        { nivel: "F\xE1cil", pergunta: "Qual g\xE1s \xE9 essencial para a respira\xE7\xE3o humana?", opcoes: ["G\xE1s carb\xF4nico", "Nitrog\xEAnio", "Oxig\xEAnio", "Hidrog\xEAnio"], certa: 2 },
+        { nivel: "F\xE1cil", pergunta: "Aproximadamente quantos ossos tem um adulto?", opcoes: ["150", "206", "260", "320"], certa: 1 },
+        { nivel: "F\xE1cil", pergunta: "Qual \xE9 o maior planeta do sistema solar?", opcoes: ["Terra", "Marte", "J\xFApiter", "Saturno"], certa: 2 },
+        { nivel: "F\xE1cil", pergunta: "Em repouso, quantos batimentos card\xEDacos por minuto tem um adulto, em m\xE9dia?", opcoes: ["20\u201340", "60\u2013100", "150\u2013180", "200\u2013220"], certa: 1 },
+        { nivel: "M\xE9dio", pergunta: "Qual organela \xE9 respons\xE1vel pela respira\xE7\xE3o celular?", opcoes: ["N\xFAcleo", "Ribossomo", "Mitoc\xF4ndria", "Vac\xFAolo"], certa: 2 },
+        { nivel: "M\xE9dio", pergunta: "A 0\xB0C, ao n\xEDvel do mar, a \xE1gua costuma estar em qual estado?", opcoes: ["L\xEDquido", "S\xF3lido", "Gasoso", "Plasma"], certa: 1 },
+        { nivel: "M\xE9dio", pergunta: "Qual \xF3rg\xE3o filtra o sangue e produz urina?", opcoes: ["F\xEDgado", "Cora\xE7\xE3o", "Rim", "Pulm\xE3o"], certa: 2 },
+        { nivel: "Dif\xEDcil", pergunta: "Quem formulou a Lei da Gravita\xE7\xE3o Universal?", opcoes: ["Einstein", "Galileu", "Newton", "Darwin"], certa: 2 },
+        { nivel: "Dif\xEDcil", pergunta: "Na fotoss\xEDntese, as plantas convertem CO\u2082 e \xE1gua em glicose usando:", opcoes: ["calor", "luz solar", "oxig\xEAnio puro", "nitrog\xEAnio"], certa: 1 },
+        { nivel: "Dif\xEDcil", pergunta: "Qual \xE9 a unidade b\xE1sica de heran\xE7a gen\xE9tica?", opcoes: ["C\xE9lula", "Gene", "Prote\xEDna", "Cromossomo"], certa: 1 }
+      ]
+    },
+    {
+      id: "historia",
+      nome: "Hist\xF3ria",
+      accent: "#C98A4B",
+      icon: "hist",
+      premio: "Um curso do site, \xE0 sua escolha",
+      questoes: [
+        { nivel: "F\xE1cil", pergunta: "Em que continente ficava o Egito Antigo?", opcoes: ["\xC1frica", "\xC1sia", "Europa", "Am\xE9rica"], certa: 0 },
+        { nivel: "F\xE1cil", pergunta: "Quem foi o primeiro imperador do Brasil?", opcoes: ["Dom Pedro I", "Dom Pedro II", "Tiradentes", "Dom Jo\xE3o VI"], certa: 0 },
+        { nivel: "F\xE1cil", pergunta: "Em que ano o Brasil se tornou independente de Portugal?", opcoes: ["1808", "1822", "1889", "1500"], certa: 1 },
+        { nivel: "F\xE1cil", pergunta: "Qual civiliza\xE7\xE3o construiu as pir\xE2mides de Giz\xE9?", opcoes: ["Romana", "Grega", "Eg\xEDpcia", "Maia"], certa: 2 },
+        { nivel: "M\xE9dio", pergunta: "Qual evento marca, por conven\xE7\xE3o, o in\xEDcio da Idade Moderna?", opcoes: ["Queda de Roma", "Tomada de Constantinopla", "Revolu\xE7\xE3o Francesa", "Descobrimento da Am\xE9rica"], certa: 1 },
+        { nivel: "M\xE9dio", pergunta: "Em que ano ocorreu a Proclama\xE7\xE3o da Rep\xFAblica no Brasil?", opcoes: ["1822", "1889", "1500", "1930"], certa: 1 },
+        { nivel: "M\xE9dio", pergunta: "Qual foi o estopim da Primeira Guerra Mundial?", opcoes: ["Crise de 1929", "Assassinato do Arquiduque Francisco Ferdinando", "Revolu\xE7\xE3o Russa", "Guerra Fria"], certa: 1 },
+        { nivel: "Dif\xEDcil", pergunta: "O Tratado de Tordesilhas (1494) dividiu terras entre quais pa\xEDses?", opcoes: ["Espanha e Portugal", "Fran\xE7a e Inglaterra", "Holanda e Espanha", "Portugal e Inglaterra"], certa: 0 },
+        { nivel: "Dif\xEDcil", pergunta: "A Guerra Fria, entre EUA e URSS, se estendeu principalmente por qual per\xEDodo?", opcoes: ["1914\u20131918", "1939\u20131945", "1947\u20131991", "1789\u20131799"], certa: 2 },
+        { nivel: "Dif\xEDcil", pergunta: "Quem liderou a independ\xEAncia da \xCDndia pela resist\xEAncia n\xE3o violenta?", opcoes: ["Nelson Mandela", "Mahatma Gandhi", "Che Guevara", "Sim\xF3n Bol\xEDvar"], certa: 1 }
+      ]
+    },
+    {
+      id: "ingles",
+      nome: "Ingl\xEAs",
+      accent: "#E38FA0",
+      icon: "eng",
+      premio: "Assinatura mensal de cursos",
+      questoes: [
+        { nivel: "F\xE1cil", pergunta: "How do you say 'obrigado' in English?", opcoes: ["Please", "Thank you", "Sorry", "Hello"], certa: 1 },
+        { nivel: "F\xE1cil", pergunta: "Choose the correct plural of 'child'.", opcoes: ["childs", "children", "childes", "childrens"], certa: 1 },
+        { nivel: "F\xE1cil", pergunta: "What is the opposite of 'hot'?", opcoes: ["warm", "cold", "fresh", "dry"], certa: 1 },
+        { nivel: "F\xE1cil", pergunta: "Complete: 'She ___ a teacher.'", opcoes: ["is", "am", "are", "be"], certa: 0 },
+        { nivel: "M\xE9dio", pergunta: "Choose the correct past tense of 'go'.", opcoes: ["goed", "gone", "went", "going"], certa: 2 },
+        { nivel: "M\xE9dio", pergunta: "Which sentence is correct?", opcoes: ["He don't like coffee.", "He doesn't likes coffee.", "He doesn't like coffee.", "He not like coffee."], certa: 2 },
+        { nivel: "M\xE9dio", pergunta: "What does 'to give up' mean?", opcoes: ["come\xE7ar", "desistir", "continuar", "ajudar"], certa: 1 },
+        { nivel: "Dif\xEDcil", pergunta: "Choose the correct conditional: 'If I ___ more time, I would travel.'", opcoes: ["have", "had", "has", "having"], certa: 1 },
+        { nivel: "Dif\xEDcil", pergunta: "Identify the passive voice: 'They built the house in 1990.'", opcoes: ["The house built in 1990.", "The house was built in 1990.", "The house is building in 1990.", "The house has build in 1990."], certa: 1 },
+        { nivel: "Dif\xEDcil", pergunta: "What is a synonym for 'meticulous'?", opcoes: ["careless", "careful", "quick", "lazy"], certa: 1 }
+      ]
+    },
+    {
+      id: "logica",
+      nome: "Racioc\xEDnio L\xF3gico",
+      accent: "#7B8FE0",
+      icon: "logica",
+      premio: "Um mouse sem fio",
+      questoes: [
+        { nivel: "F\xE1cil", pergunta: "Qual n\xFAmero completa a sequ\xEAncia: 2, 4, 6, 8, ___?", opcoes: ["9", "10", "12", "11"], certa: 1 },
+        { nivel: "F\xE1cil", pergunta: "Se hoje \xE9 ter\xE7a-feira, que dia ser\xE1 depois de amanh\xE3?", opcoes: ["Quarta", "Quinta", "Sexta", "S\xE1bado"], certa: 1 },
+        { nivel: "F\xE1cil", pergunta: "Complete a sequ\xEAncia: A, C, E, G, ___", opcoes: ["H", "I", "J", "F"], certa: 1 },
+        { nivel: "F\xE1cil", pergunta: "Qual \xE9 o pr\xF3ximo n\xFAmero: 1, 1, 2, 3, 5, ___?", opcoes: ["6", "7", "8", "9"], certa: 2 },
+        { nivel: "M\xE9dio", pergunta: "Ana \xE9 mais velha que Bia, e Bia \xE9 mais velha que Caio. Quem \xE9 o mais novo?", opcoes: ["Ana", "Bia", "Caio", "N\xE3o d\xE1 pra saber"], certa: 2 },
+        { nivel: "M\xE9dio", pergunta: "Todos os gatos s\xE3o animais. Rex \xE9 um gato. O que podemos concluir?", opcoes: ["Rex \xE9 um animal", "Rex n\xE3o \xE9 um animal", "Todos os animais s\xE3o gatos", "Nenhuma conclus\xE3o poss\xEDvel"], certa: 0 },
+        { nivel: "M\xE9dio", pergunta: "Qual n\xFAmero n\xE3o pertence ao grupo: 3, 5, 7, 10, 11?", opcoes: ["3", "5", "10", "11"], certa: 2 },
+        { nivel: "Dif\xEDcil", pergunta: "Jo\xE3o chegou antes de Pedro, mas depois de Maria. Quem chegou em primeiro lugar?", opcoes: ["Jo\xE3o", "Pedro", "Maria", "Empate"], certa: 2 },
+        { nivel: "Dif\xEDcil", pergunta: "Se A > B e B > C, qual afirma\xE7\xE3o \xE9 verdadeira?", opcoes: ["A < C", "A = C", "A > C", "N\xE3o d\xE1 pra saber"], certa: 2 },
+        { nivel: "Dif\xEDcil", pergunta: "Complete a sequ\xEAncia de rota\xE7\xE3o: quadrado, tri\xE2ngulo, quadrado, tri\xE2ngulo, ___?", opcoes: ["Quadrado", "Tri\xE2ngulo", "C\xEDrculo", "Hex\xE1gono"], certa: 0 }
+      ]
+    }
+  ];
+  const NIVEL_COR = { "F\xE1cil": "#3FAE86", "M\xE9dio": "#E0A94A", "Dif\xEDcil": "#D14C42" };
+  const COLS = 5;
+  const ROWS = 2;
+  const BOX_W = 300;
+  const BOX_H = 120;
+  const PIECE_W = BOX_W / COLS;
+  const PIECE_H = BOX_H / ROWS;
+  const TAB_R = Math.min(PIECE_W, PIECE_H) * 0.24;
+  const V_SIGN = [
+    [1, -1, 1, -1],
+    [-1, 1, -1, 1]
+  ];
+  const H_SIGN = [1, -1, 1, -1, 1];
+  function edgeSeg(x0, y0, x1, y1, bump, ox, oy, r) {
+    if (!bump) return `L ${x1} ${y1}`;
+    const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy);
+    const ux = dx / len, uy = dy / len;
+    const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+    const p1x = mx - ux * r, p1y = my - uy * r;
+    const p2x = mx + ux * r, p2y = my + uy * r;
+    const cand1x = uy, cand1y = -ux;
+    const dot = cand1x * (ox * bump) + cand1y * (oy * bump);
+    const sweep = dot > 0 ? 1 : 0;
+    return `L ${p1x} ${p1y} A ${r} ${r} 0 0 ${sweep} ${p2x} ${p2y} L ${x1} ${y1}`;
+  }
+  function buildPieces() {
+    const pecas = [];
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        const x0 = col * PIECE_W, y0 = row * PIECE_H;
+        const x1 = x0 + PIECE_W, y1 = y0 + PIECE_H;
+        const topBump = row === 0 ? 0 : -H_SIGN[col];
+        const rightBump = col === COLS - 1 ? 0 : V_SIGN[row][col];
+        const bottomBump = row === ROWS - 1 ? 0 : H_SIGN[col];
+        const leftBump = col === 0 ? 0 : -V_SIGN[row][col - 1];
+        let d = `M ${x0} ${y0} `;
+        d += edgeSeg(x0, y0, x1, y0, topBump, 0, -1, TAB_R) + " ";
+        d += edgeSeg(x1, y0, x1, y1, rightBump, 1, 0, TAB_R) + " ";
+        d += edgeSeg(x1, y1, x0, y1, bottomBump, 0, 1, TAB_R) + " ";
+        d += edgeSeg(x0, y1, x0, y0, leftBump, -1, 0, TAB_R) + " Z";
+        pecas.push({ d, cx: x0 + PIECE_W / 2, cy: y0 + PIECE_H / 2 });
+      }
+    }
+    return pecas;
+  }
+  const PECAS_FORMA = buildPieces();
+  function AreaIcon({ type, color, size = 28 }) {
+    const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: color, strokeWidth: 1.6, strokeLinecap: "round", strokeLinejoin: "round" };
+    if (type === "math") {
+      return /* @__PURE__ */ React.createElement("svg", { ...common }, /* @__PURE__ */ React.createElement("circle", { cx: "5", cy: "7", r: "1.4", fill: color, stroke: "none" }), /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "7", r: "1.4", fill: color, stroke: "none" }), /* @__PURE__ */ React.createElement("circle", { cx: "19", cy: "7", r: "1.4", fill: color, stroke: "none" }), /* @__PURE__ */ React.createElement("line", { x1: "4", y1: "13", x2: "20", y2: "13" }), /* @__PURE__ */ React.createElement("circle", { cx: "5", cy: "18", r: "1.4", fill: color, stroke: "none" }), /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "18", r: "1.4", fill: color, stroke: "none" }));
+    }
+    if (type === "port") {
+      return /* @__PURE__ */ React.createElement("svg", { ...common }, /* @__PURE__ */ React.createElement("path", { d: "M4 5c3 -1.2 6 -1.2 8 0c2 -1.2 5 -1.2 8 0v14c-3 -1.2 -6 -1.2 -8 0c-2 -1.2 -5 -1.2 -8 0Z" }), /* @__PURE__ */ React.createElement("line", { x1: "12", y1: "5", x2: "12", y2: "19" }));
+    }
+    if (type === "sci") {
+      return /* @__PURE__ */ React.createElement("svg", { ...common }, /* @__PURE__ */ React.createElement("path", { d: "M10 3h4" }), /* @__PURE__ */ React.createElement("path", { d: "M11 3v6l-5.5 9.2c-.6 1 .1 2.3 1.3 2.3h10.4c1.2 0 1.9 -1.3 1.3 -2.3L13 9V3" }), /* @__PURE__ */ React.createElement("circle", { cx: "10.5", cy: "16", r: "0.8", fill: color, stroke: "none" }), /* @__PURE__ */ React.createElement("circle", { cx: "14", cy: "17.5", r: "0.6", fill: color, stroke: "none" }));
+    }
+    if (type === "hist") {
+      return /* @__PURE__ */ React.createElement("svg", { ...common }, /* @__PURE__ */ React.createElement("line", { x1: "4", y1: "5", x2: "20", y2: "5" }), /* @__PURE__ */ React.createElement("line", { x1: "4", y1: "19", x2: "20", y2: "19" }), /* @__PURE__ */ React.createElement("line", { x1: "7", y1: "7", x2: "7", y2: "17" }), /* @__PURE__ */ React.createElement("line", { x1: "12", y1: "7", x2: "12", y2: "17" }), /* @__PURE__ */ React.createElement("line", { x1: "17", y1: "7", x2: "17", y2: "17" }));
+    }
+    if (type === "eng") {
+      return /* @__PURE__ */ React.createElement("svg", { ...common }, /* @__PURE__ */ React.createElement("path", { d: "M4 5h16v10H9l-3 3v-3H4Z" }), /* @__PURE__ */ React.createElement("line", { x1: "7.5", y1: "8.5", x2: "16.5", y2: "8.5" }), /* @__PURE__ */ React.createElement("line", { x1: "7.5", y1: "11.5", x2: "13", y2: "11.5" }));
+    }
+    return /* @__PURE__ */ React.createElement("svg", { ...common }, /* @__PURE__ */ React.createElement("circle", { cx: "6", cy: "6", r: "1.6", fill: color, stroke: "none" }), /* @__PURE__ */ React.createElement("circle", { cx: "18", cy: "6", r: "1.6", fill: color, stroke: "none" }), /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "18", r: "1.6", fill: color, stroke: "none" }), /* @__PURE__ */ React.createElement("line", { x1: "6", y1: "6", x2: "18", y2: "6" }), /* @__PURE__ */ React.createElement("line", { x1: "6", y1: "6", x2: "12", y2: "18" }), /* @__PURE__ */ React.createElement("line", { x1: "18", y1: "6", x2: "12", y2: "18" }));
+  }
+  function IconePremio({ type }) {
+    if (type === "math") {
+      return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("circle", { cx: "2", cy: "3", r: "1", fill: "currentColor", stroke: "none" }), /* @__PURE__ */ React.createElement("circle", { cx: "8", cy: "3", r: "1", fill: "currentColor", stroke: "none" }), /* @__PURE__ */ React.createElement("line", { x1: "1", y1: "8", x2: "9", y2: "8" }), /* @__PURE__ */ React.createElement("circle", { cx: "2", cy: "13", r: "1", fill: "currentColor", stroke: "none" }), /* @__PURE__ */ React.createElement("circle", { cx: "8", cy: "13", r: "1", fill: "currentColor", stroke: "none" }));
+    }
+    if (type === "port") {
+      return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("path", { d: "M0 1c2 -0.8 4 -0.8 5 0c1 -0.8 3 -0.8 5 0v11c-2 -0.8 -4 -0.8 -5 0c-1 -0.8 -3 -0.8 -5 0Z" }), /* @__PURE__ */ React.createElement("line", { x1: "5", y1: "1", x2: "5", y2: "12" }));
+    }
+    if (type === "sci") {
+      return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("path", { d: "M4 0h2" }), /* @__PURE__ */ React.createElement("path", { d: "M4.3 0v4l-3.6 6c-.4 .7 0 1.5 .8 1.5h7c.8 0 1.2 -.8 .8 -1.5l-3.6 -6V0" }));
+    }
+    if (type === "hist") {
+      return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("line", { x1: "0", y1: "0", x2: "10", y2: "0" }), /* @__PURE__ */ React.createElement("line", { x1: "0", y1: "13", x2: "10", y2: "13" }), /* @__PURE__ */ React.createElement("line", { x1: "2", y1: "2", x2: "2", y2: "11" }), /* @__PURE__ */ React.createElement("line", { x1: "5", y1: "2", x2: "5", y2: "11" }), /* @__PURE__ */ React.createElement("line", { x1: "8", y1: "2", x2: "8", y2: "11" }));
+    }
+    if (type === "eng") {
+      return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("path", { d: "M0 0h10v6.5H5l-2 2v-2H0Z" }), /* @__PURE__ */ React.createElement("line", { x1: "2", y1: "2.2", x2: "8", y2: "2.2" }), /* @__PURE__ */ React.createElement("line", { x1: "2", y1: "4.2", x2: "6", y2: "4.2" }));
+    }
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("circle", { cx: "1.5", cy: "1.5", r: "1", fill: "currentColor", stroke: "none" }), /* @__PURE__ */ React.createElement("circle", { cx: "8.5", cy: "1.5", r: "1", fill: "currentColor", stroke: "none" }), /* @__PURE__ */ React.createElement("circle", { cx: "5", cy: "11", r: "1", fill: "currentColor", stroke: "none" }), /* @__PURE__ */ React.createElement("line", { x1: "1.5", y1: "1.5", x2: "8.5", y2: "1.5" }), /* @__PURE__ */ React.createElement("line", { x1: "1.5", y1: "1.5", x2: "5", y2: "11" }), /* @__PURE__ */ React.createElement("line", { x1: "8.5", y1: "1.5", x2: "5", y2: "11" }));
+  }
+  function ArteMedalha({ color, type }) {
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("defs", null, /* @__PURE__ */ React.createElement("radialGradient", { id: `grad-${type}`, cx: "50%", cy: "42%", r: "70%" }, /* @__PURE__ */ React.createElement("stop", { offset: "0%", stopColor: color, stopOpacity: "0.95" }), /* @__PURE__ */ React.createElement("stop", { offset: "100%", stopColor: color, stopOpacity: "0.55" }))), /* @__PURE__ */ React.createElement("path", { d: "M122 58 L98 116 L150 100 L202 116 L178 58 Z", fill: color, opacity: "0.35" }), /* @__PURE__ */ React.createElement("circle", { cx: "150", cy: "55", r: "45", fill: `url(#grad-${type})`, stroke: "#F5F1EA", strokeWidth: "3" }), /* @__PURE__ */ React.createElement("circle", { cx: "150", cy: "55", r: "33", fill: "none", stroke: "#F5F1EA", strokeWidth: "1.5", opacity: "0.6" }), /* @__PURE__ */ React.createElement("g", { transform: "translate(143.5,46) scale(1.3)", stroke: "#F5F1EA", fill: "none", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round", color: "#F5F1EA" }, /* @__PURE__ */ React.createElement(IconePremio, { type })));
+  }
+  const PASSOS_ONBOARDING = [
+    { titulo: "Escolha uma \xE1rea", texto: "Matem\xE1tica, Portugu\xEAs, Ci\xEAncias, Hist\xF3ria, Ingl\xEAs ou Racioc\xEDnio L\xF3gico \u2014 comece pela que quiser." },
+    { titulo: "Responda aos desafios", texto: "As perguntas come\xE7am f\xE1ceis e v\xE3o ficando mais dif\xEDceis conforme voc\xEA avan\xE7a." },
+    { titulo: "Ganhe pe\xE7as a cada acerto", texto: "Cada resposta certa encaixa uma pe\xE7a no seu quebra-cabe\xE7a, revelando um peda\xE7o do desenho." },
+    { titulo: "Errou? Sem problema", texto: "Voc\xEA pode tentar de novo. Nenhuma pe\xE7a j\xE1 conquistada \xE9 perdida." },
+    { titulo: "Pare e continue quando quiser", texto: "Seu progresso fica salvo em cada \xE1rea. Volte amanh\xE3 de onde parou." },
+    { titulo: "Complete para revelar o pr\xEAmio", texto: "Ao encaixar todas as pe\xE7as, o pr\xEAmio escondido \xE9 revelado \u2014 e fica seu." }
+  ];
+  function QuebraPremio() {
+    const [telaAtual, setTelaAtual] = useState("intro");
+    const [areaId, setAreaId] = useState(null);
+    const [progresso, setProgresso] = useState(
+      Object.fromEntries(AREAS.map((a) => [a.id, { coletadas: 0 }]))
+    );
+    const [selecionada, setSelecionada] = useState(null);
+    const [feedback, setFeedback] = useState(null);
+    const area = AREAS.find((a) => a.id === areaId);
+    const totalPecas = area ? area.questoes.length : 0;
+    const coletadas = area ? progresso[area.id].coletadas : 0;
+    const questaoAtual = area ? area.questoes[coletadas] : null;
+    function abrirArea(id) {
+      const a = AREAS.find((x) => x.id === id);
+      if (progresso[id].coletadas >= a.questoes.length) {
+        setAreaId(id);
+        setTelaAtual("revelado");
+        return;
+      }
+      setAreaId(id);
+      setSelecionada(null);
+      setFeedback(null);
+      setTelaAtual("jogando");
+    }
+    function escolherOpcao(indice) {
+      if (feedback) return;
+      setSelecionada(indice);
+      setFeedback(indice === questaoAtual.certa ? "certo" : "errado");
+    }
+    function continuar() {
+      if (feedback === "certo") {
+        const novaContagem = coletadas + 1;
+        setProgresso((p) => ({ ...p, [area.id]: { coletadas: novaContagem } }));
+        setSelecionada(null);
+        setFeedback(null);
+        if (novaContagem >= totalPecas) {
+          setTelaAtual("revelado");
+        }
+      } else {
+        setSelecionada(null);
+        setFeedback(null);
+      }
+    }
+    return /* @__PURE__ */ React.createElement("div", { className: "qp-root" }, /* @__PURE__ */ React.createElement("style", null, `
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+        .qp-root {
+          --bg: #1E1533;
+          --card: #291F45;
+          --card-hi: #332755;
+          --ink: #F5F1EA;
+          --ink-dim: #B6ADD1;
+          --gold: #E8A93A;
+          --ok: #3FAE86;
+          --bad: #D14C42;
+          font-family: 'Space Grotesk', sans-serif;
+          background: var(--bg);
+          color: var(--ink);
+          min-height: 100%;
+          padding: 28px 20px 40px;
+          box-sizing: border-box;
+        }
+        .qp-root * { box-sizing: border-box; }
+        .qp-wrap { max-width: 720px; margin: 0 auto; }
+
+        .qp-eyebrow { font-size: 13px; color: var(--ink-dim); margin: 0 0 4px; }
+        .qp-title { font-family: 'Fraunces', serif; font-weight: 700; font-size: 30px; margin: 0 0 22px; line-height: 1.15; }
+        .qp-title-row { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 22px; }
+        .qp-title-row .qp-title { margin-bottom: 0; }
+        .qp-link-btn { background: none; border: none; color: var(--ink-dim); font-family: 'Space Grotesk'; font-size: 13px; cursor: pointer; padding: 0; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; }
+        .qp-link-btn:hover { color: var(--ink); }
+
+        .qp-intro-steps { display: grid; gap: 14px; margin-bottom: 26px; }
+        .qp-intro-step { display: flex; gap: 14px; background: var(--card); border-radius: 12px; padding: 16px 18px; }
+        .qp-intro-num { font-family: 'Fraunces', serif; font-weight: 700; font-size: 18px; color: var(--gold); flex-shrink: 0; width: 24px; }
+        .qp-intro-step h3 { margin: 0 0 3px; font-size: 15px; font-weight: 600; }
+        .qp-intro-step p { margin: 0; font-size: 14px; color: var(--ink-dim); line-height: 1.5; }
+        .qp-btn-primary { background: var(--gold); color: #241A0A; border: none; border-radius: 10px; padding: 13px 24px; font-family: 'Space Grotesk'; font-weight: 600; font-size: 15px; cursor: pointer; }
+        .qp-btn-primary:hover { filter: brightness(1.06); }
+
+        .qp-grid-areas { display: grid; grid-template-columns: 1fr; gap: 14px; }
+        @media (min-width: 620px) { .qp-grid-areas { grid-template-columns: 1fr 1fr; } }
+
+        .qp-area-card {
+          background: var(--card);
+          border-radius: 14px;
+          padding: 18px;
+          text-align: left;
+          cursor: pointer;
+          border: 1px solid rgba(255,255,255,0.06);
+          transition: transform .15s ease, border-color .15s ease;
+          color: var(--ink);
+        }
+        .qp-area-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.16); }
+        .qp-area-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .qp-area-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.06); flex-shrink: 0; }
+        .qp-area-nome { font-weight: 600; font-size: 16px; margin: 0; }
+        .qp-area-status { font-size: 13px; color: var(--ink-dim); margin: 0; }
+
+        .qp-mini-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 6px; }
+        .qp-mini-piece { aspect-ratio: 1; border-radius: 4px; background: rgba(255,255,255,0.08); }
+        .qp-mini-piece.on { background: var(--piece-color, var(--gold)); }
+
+        .qp-back { background: none; border: none; color: var(--ink-dim); font-family: 'Space Grotesk'; font-size: 14px; cursor: pointer; padding: 0; margin-bottom: 18px; display: inline-flex; align-items: center; gap: 6px; }
+        .qp-back:hover { color: var(--ink); }
+
+        .qp-header-jogo { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; }
+        .qp-header-jogo h2 { font-family: 'Fraunces', serif; font-weight: 700; font-size: 22px; margin: 0; }
+        .qp-header-jogo span { font-size: 13px; color: var(--ink-dim); }
+
+        .qp-puzzle-box { width: 100%; max-width: 340px; aspect-ratio: 5 / 2; border-radius: 14px; overflow: hidden; background: var(--card); margin: 0 auto 22px; }
+        .qp-piece-cover { transition: opacity .45s ease, transform .45s ease; transform-box: fill-box; transform-origin: center; }
+        .qp-piece-cover.unlocked { opacity: 0; transform: scale(0.8); }
+        .qp-piece-num { font-family: 'Space Grotesk'; font-size: 11px; font-weight: 600; fill: var(--ink-dim); }
+
+        .qp-question-card { background: var(--card); border-radius: 14px; padding: 20px; }
+        .qp-nivel { display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; margin-bottom: 12px; }
+        .qp-pergunta { font-family: 'Fraunces', serif; font-size: 19px; font-weight: 600; margin: 0 0 16px; line-height: 1.35; }
+
+        .qp-opcoes { display: grid; gap: 10px; }
+        .qp-opcao {
+          text-align: left;
+          padding: 13px 16px;
+          border-radius: 10px;
+          border: 1.5px solid rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.03);
+          color: var(--ink);
+          font-family: 'Space Grotesk';
+          font-size: 15px;
+          cursor: pointer;
+          transition: border-color .15s ease, background .15s ease;
+        }
+        .qp-opcao:hover:not(:disabled) { border-color: rgba(255,255,255,0.3); }
+        .qp-opcao.certa { border-color: var(--ok); background: rgba(63,174,134,0.14); }
+        .qp-opcao.errada { border-color: var(--bad); background: rgba(209,76,66,0.14); }
+        .qp-opcao:disabled { cursor: default; }
+
+        .qp-feedback-msg { margin-top: 14px; font-size: 14px; color: var(--ink-dim); }
+        .qp-continuar { margin-top: 16px; background: var(--gold); color: #241A0A; border: none; border-radius: 10px; padding: 12px 22px; font-family: 'Space Grotesk'; font-weight: 600; font-size: 15px; cursor: pointer; }
+        .qp-continuar:hover { filter: brightness(1.06); }
+
+        .qp-reveal { text-align: center; padding: 10px 0 20px; }
+        .qp-reveal-art { width: 220px; margin: 0 auto 20px; animation: qp-pop .5s ease; }
+        @keyframes qp-pop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .qp-reveal-eyebrow { color: var(--ink-dim); font-size: 14px; margin: 0 0 6px; }
+        .qp-reveal-premio { font-family: 'Fraunces', serif; font-weight: 700; font-size: 26px; margin: 0 0 22px; }
+        .qp-reveal-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .qp-btn-secondary { background: none; border: 1.5px solid rgba(255,255,255,0.2); color: var(--ink); border-radius: 10px; padding: 11px 22px; font-family: 'Space Grotesk'; font-weight: 600; font-size: 15px; cursor: pointer; }
+      `), /* @__PURE__ */ React.createElement("div", { className: "qp-wrap" }, telaAtual === "intro" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "qp-eyebrow" }, "Quebra-Pr\xEAmio"), /* @__PURE__ */ React.createElement("h1", { className: "qp-title" }, "Como funciona"), /* @__PURE__ */ React.createElement("div", { className: "qp-intro-steps" }, PASSOS_ONBOARDING.map((p, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "qp-intro-step" }, /* @__PURE__ */ React.createElement("span", { className: "qp-intro-num" }, i + 1), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", null, p.titulo), /* @__PURE__ */ React.createElement("p", null, p.texto))))), /* @__PURE__ */ React.createElement("button", { className: "qp-btn-primary", onClick: () => setTelaAtual("selecao") }, "Entendi, vamos jogar")), telaAtual === "selecao" && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "qp-eyebrow" }, "Quebra-Pr\xEAmio"), /* @__PURE__ */ React.createElement("div", { className: "qp-title-row" }, /* @__PURE__ */ React.createElement("h1", { className: "qp-title" }, "Escolha uma \xE1rea e comece a montar seu quebra-cabe\xE7a"), /* @__PURE__ */ React.createElement("button", { className: "qp-link-btn", onClick: () => setTelaAtual("intro") }, "Como jogar")), /* @__PURE__ */ React.createElement("div", { className: "qp-grid-areas" }, AREAS.map((a) => {
+      const c = progresso[a.id].coletadas;
+      const total = a.questoes.length;
+      const completo = c >= total;
+      return /* @__PURE__ */ React.createElement("button", { key: a.id, className: "qp-area-card", onClick: () => abrirArea(a.id) }, /* @__PURE__ */ React.createElement("div", { className: "qp-area-top" }, /* @__PURE__ */ React.createElement("div", { className: "qp-area-icon" }, /* @__PURE__ */ React.createElement(AreaIcon, { type: a.icon, color: a.accent })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "qp-area-nome" }, a.nome), /* @__PURE__ */ React.createElement("p", { className: "qp-area-status" }, completo ? `Conclu\xEDdo \xB7 ${a.premio}` : `${c} de ${total} pe\xE7as`))), /* @__PURE__ */ React.createElement("div", { className: "qp-mini-grid" }, a.questoes.map((_, i) => /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: i,
+          className: `qp-mini-piece ${i < c ? "on" : ""}`,
+          style: { "--piece-color": a.accent }
+        }
+      ))));
+    }))), telaAtual === "jogando" && area && questaoAtual && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "qp-back", onClick: () => setTelaAtual("selecao") }, "\u2190 Voltar \xE0s \xE1reas"), /* @__PURE__ */ React.createElement("div", { className: "qp-header-jogo" }, /* @__PURE__ */ React.createElement("h2", null, area.nome), /* @__PURE__ */ React.createElement("span", null, coletadas, " de ", totalPecas, " pe\xE7as")), /* @__PURE__ */ React.createElement("div", { className: "qp-puzzle-box" }, /* @__PURE__ */ React.createElement("svg", { viewBox: `0 0 ${BOX_W} ${BOX_H}`, width: "100%", height: "100%" }, /* @__PURE__ */ React.createElement(ArteMedalha, { color: area.accent, type: area.icon }), PECAS_FORMA.map((p, i) => /* @__PURE__ */ React.createElement("path", { key: `seam-${i}`, d: p.d, fill: "none", stroke: "rgba(0,0,0,0.28)", strokeWidth: "1" })), PECAS_FORMA.map((p, i) => /* @__PURE__ */ React.createElement(
+      "path",
+      {
+        key: `cover-${i}`,
+        d: p.d,
+        className: `qp-piece-cover ${i < coletadas ? "unlocked" : ""}`,
+        fill: "var(--card-hi)",
+        stroke: "rgba(0,0,0,0.28)",
+        strokeWidth: "1"
+      }
+    )), PECAS_FORMA.map(
+      (p, i) => i >= coletadas ? /* @__PURE__ */ React.createElement("text", { key: `num-${i}`, x: p.cx, y: p.cy + 4, textAnchor: "middle", className: "qp-piece-num" }, i + 1) : null
+    ))), /* @__PURE__ */ React.createElement("div", { className: "qp-question-card" }, /* @__PURE__ */ React.createElement("span", { className: "qp-nivel", style: { background: `${NIVEL_COR[questaoAtual.nivel]}26`, color: NIVEL_COR[questaoAtual.nivel] } }, questaoAtual.nivel), /* @__PURE__ */ React.createElement("p", { className: "qp-pergunta" }, questaoAtual.pergunta), /* @__PURE__ */ React.createElement("div", { className: "qp-opcoes" }, questaoAtual.opcoes.map((op, i) => {
+      let cls = "qp-opcao";
+      if (feedback && i === questaoAtual.certa) cls += " certa";
+      else if (feedback && i === selecionada) cls += " errada";
+      return /* @__PURE__ */ React.createElement("button", { key: i, className: cls, disabled: !!feedback, onClick: () => escolherOpcao(i) }, op);
+    })), feedback === "certo" && /* @__PURE__ */ React.createElement("p", { className: "qp-feedback-msg" }, "Isso mesmo! Uma pe\xE7a se encaixou no quebra-cabe\xE7a."), feedback === "errado" && /* @__PURE__ */ React.createElement("p", { className: "qp-feedback-msg" }, "N\xE3o foi dessa vez \u2014 a resposta certa est\xE1 destacada acima."), feedback && /* @__PURE__ */ React.createElement("button", { className: "qp-continuar", onClick: continuar }, feedback === "certo" ? "Continuar" : "Tentar de novo"))), telaAtual === "revelado" && area && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "qp-back", onClick: () => setTelaAtual("selecao") }, "\u2190 Voltar \xE0s \xE1reas"), /* @__PURE__ */ React.createElement("div", { className: "qp-reveal" }, /* @__PURE__ */ React.createElement("div", { className: "qp-reveal-art" }, /* @__PURE__ */ React.createElement("svg", { viewBox: `0 0 ${BOX_W} ${BOX_H}`, width: "100%", height: "100%" }, /* @__PURE__ */ React.createElement(ArteMedalha, { color: area.accent, type: area.icon }))), /* @__PURE__ */ React.createElement("p", { className: "qp-reveal-eyebrow" }, "Quebra-cabe\xE7a completo \u2014 ", area.nome), /* @__PURE__ */ React.createElement("p", { className: "qp-reveal-premio" }, area.premio), /* @__PURE__ */ React.createElement("div", { className: "qp-reveal-actions" }, /* @__PURE__ */ React.createElement("button", { className: "qp-btn-primary", onClick: () => alert("Aqui entraria o fluxo de resgate do pr\xEAmio.") }, "Resgatar pr\xEAmio"), /* @__PURE__ */ React.createElement("button", { className: "qp-btn-secondary", onClick: () => setTelaAtual("selecao") }, "Escolher outro desafio"))))));
+  }
+  window.QuebraPremio = QuebraPremio;
+})();
+</script>
+<script>
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  root.render(React.createElement(window.QuebraPremio));
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/service-worker.js").catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>

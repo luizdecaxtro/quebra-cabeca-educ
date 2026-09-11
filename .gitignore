@@ -1,0 +1,9 @@
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.local
+
+# Se um dia vocês migrarem pra um projeto com build (Vite, etc.):
+node_modules/
+dist/
